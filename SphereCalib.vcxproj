@@ -20,10 +20,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\helpers\readFiles.cpp" />
+    <ClCompile Include="src\helpers\writePly.cpp" />
     <ClCompile Include="src\SphereCalib.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\helpers\readFiles.h" />
+    <ClInclude Include="include\helpers\writePly.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -80,6 +82,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <IncludePath>$(SolutionDir)\include;T:\OpenCV-4.6.0\opencv\build\include;$(IncludePath)</IncludePath>
     <LibraryPath>T:\OpenCV-4.6.0\opencv\build\x64\vc15\lib;$(LibraryPath)</LibraryPath>
+    <SourcePath>
+    </SourcePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

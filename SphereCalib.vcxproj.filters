@@ -21,9 +21,15 @@
     <ClCompile Include="src\helpers\readFiles.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\helpers\writePly.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\helpers\readFiles.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\helpers\writePly.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
