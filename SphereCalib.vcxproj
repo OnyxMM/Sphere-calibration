@@ -19,7 +19,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\helpers\readFiles.cpp" />
     <ClCompile Include="src\SphereCalib.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\helpers\readFiles.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -74,7 +78,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>T:\OpenCV-4.6.0\opencv\build\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)\include;T:\OpenCV-4.6.0\opencv\build\include;$(IncludePath)</IncludePath>
     <LibraryPath>T:\OpenCV-4.6.0\opencv\build\x64\vc15\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
