@@ -1,56 +1,49 @@
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/highgui.hpp>
+#include "helpers/readFiles.h"
+#include "helpers/writePly.h"
 #include <iostream>
-#include <fstream>
 
+int main() {
 
-int main()
-{
-    {
-        //Point Cloud
-        const char* xyzFileName = "input/L1_S5.xyz";
+    // Provide the directories and filenames as input vectors
+    std::string imgDir = "input/";
+    std::vector<std::string> imgNames = { "C1_S5.bmp" };
+    std::string scan3dDir = "input/";
+    std::vector<std::string> scan3dNames = { "sphereCalibScan5.ply" };
 
-        // Open the .xyz file for reading
-        std::ifstream inputFile(xyzFileName);
+    std::vector<cv::Mat> imgs;
+    std::vector<std::vector<cv::Point3f>> points;
+    std::vector<std::vector<cv::Vec3i>> colors;
 
-        if (!inputFile.is_open()) {
-            std::cerr << "Failed to open the .xyz file." << std::endl;
-            return 1;
-        }
-
-        // Read and print the first 10 lines
-        for (int i = 0; i < 10; i++) {
-            double x, y, z;
-            inputFile >> x >> y >> z;
-            std::cout << "Line " << i + 1 << ": " << x << " " << y << " " << z << std::endl;
-        }
-
-        // Close the file
-        inputFile.close();
+    try {
+        readFiles(imgDir, imgNames, scan3dDir, scan3dNames, imgs, points, colors);
     }
-    
-    {
-        //Image
-        std::string image_path =
-            "input/C1_S5.bmp";
-        cv::Mat img = cv::imread(image_path, cv::IMREAD_COLOR);
-
-        if (img.empty())
-        {
-            std::cout << "Could not read the image: " << image_path << std::endl;
-            return 1;
-        }
-
-        cv::imshow("Display window", img);
-
-        int k = cv::waitKey(0); // Wait for a keystroke in the window
-        if (k == 's')
-        {
-            cv::imwrite("starry_night.png", img);
-        }
+    catch (const std::runtime_error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
     }
 
+    // Display the images
+    for (int i = 0; i < imgs.size(); i++) {
+        cv::imshow("Image " + std::to_string(i + 1), imgs[i]);
+        cv::waitKey(0);  // Wait for a key press (you may need to close the image window manually)
+    }
+
+    for (int i = 0; i < points.size(); i++) {
+        // Display the first few points from each point cloud
+        std::cout << "Point Cloud " << i + 1 << ":\n";
+        for (int j = 0; j < std::min(5, static_cast<int>(points[i].size())); j++) {
+            cv::Point3f p = points[i][j];
+            cv::Vec3i color = colors[i][j];
+
+            std::cout << "Point " << j + 1 << ": (" << p.x << ", " << p.y << ", " << p.z
+                << "), Color: (" << color[2] << ", " << color[1] << ", " << color[0] << ")\n";
+        }
+
+        // Write the point cloud to a PLY file
+        std::string outputFileName = "pointCloud" + std::to_string(i + 1);
+        writePly(outputFileName, points[i], colors[i]);
+        std::cout << "Point cloud written to " << outputFileName << ".ply" << std::endl;
+    }
 
     return 0;
 }
