@@ -19,13 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\helpers\readFiles.cpp" />
-    <ClCompile Include="src\helpers\writePly.cpp" />
+    <ClCompile Include="src\lib.cpp" />
+    <ClCompile Include="src\pointCloudProcessor.cpp" />
     <ClCompile Include="src\SphereCalib.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\helpers\readFiles.h" />
-    <ClInclude Include="include\helpers\writePly.h" />
+    <ClInclude Include="include\pointCloudProcessor.h" />
+    <ClInclude Include="include\lib.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>17.0</VCProjectVersion>
@@ -119,6 +119,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

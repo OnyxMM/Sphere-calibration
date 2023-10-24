@@ -18,18 +18,18 @@
     <ClCompile Include="src\SphereCalib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\helpers\readFiles.cpp">
+    <ClCompile Include="src\pointCloudProcessor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\helpers\writePly.cpp">
+    <ClCompile Include="src\lib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\helpers\readFiles.h">
+    <ClInclude Include="include\pointCloudProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\helpers\writePly.h">
+    <ClInclude Include="include\lib.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
