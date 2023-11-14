@@ -80,8 +80,8 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(SolutionDir)\include;T:\OpenCV-4.6.0\opencv\build\include;$(IncludePath)</IncludePath>
-    <LibraryPath>T:\OpenCV-4.6.0\opencv\build\x64\vc15\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)\include;T:\OpenCV-4.6.0\opencv\build\include;T:\PCL 1.13.1\3rdParty\FLANN\include;C:\Program Files\OpenNI2\Include;T:\PCL 1.13.1\3rdParty;T:\PCL 1.13.1\3rdParty\Qhull\include;T:\PCL 1.13.1\3rdParty\VTK\include\vtk-9.2;T:\PCL 1.13.1\include\pcl-1.13;$(IncludePath)</IncludePath>
+    <LibraryPath>T:\PCL 1.13.1\lib;T:\PCL 1.13.1\3rdParty\VTK\lib\vtk-9.2;T:\PCL 1.13.1\3rdParty\FLANN\lib;T:\PCL 1.13.1\3rdParty\Qhull\lib;C:\Program Files\OpenNI2\Lib;T:\OpenCV-4.6.0\opencv\build\x64\vc15\lib;T:\PCL 1.13.1\lib\$(Configuration);$(LibraryPath)</LibraryPath>
     <SourcePath>
     </SourcePath>
   </PropertyGroup>
@@ -120,12 +120,13 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>T:\eigen-3.4.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>T:\PCL 1.13.1\3rdParty\Boost\include\boost-1_82;T:\eigen-3.4.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>opencv_world460d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world460d.lib;pcl_commond.lib;pcl_kdtreed.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>T:\PCL 1.13.1\3rdParty\Boost\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
