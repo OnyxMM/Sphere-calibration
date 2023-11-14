@@ -16,8 +16,8 @@ int main() {
     int iterations = 10000;
     int adjacencyThreshold = 30;
     float ransacThreshold = 0.05;
-    float rMin = 0.10;
-    float rMax = 3.0;
+    float rMin = 0.1;
+    float rMax = 0.5;
     std::vector<Eigen::Vector3f> inliers;
     Eigen::Vector3f S0;
     float r;
