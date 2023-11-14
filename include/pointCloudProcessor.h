@@ -25,6 +25,8 @@ public:
         }
     }
 
+    void detectSphereRand4p(int iterations, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices);
+
     void detectSphereWithAdjacency(int iterations, int adjacencyThreshold, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices);
 
     void findKNearestNeighbors(const std::vector<Eigen::Vector3f>& pointCloud, const Eigen::Vector3f& queryPoint, std::vector<int>& indices, int k);
@@ -48,4 +50,6 @@ public:
     }
 
     void colorInlierIndicesRed(std::vector<int>& inlierIndices);
+
+    std::vector<int> generateRandomIndices(int numPts, int numRandomIndices);
 };

@@ -23,6 +23,10 @@ int main() {
     float r;
     std::vector<int> inlierIndices;
     
+    // Rand4p method
+    //pointCloudProcessor.detectSphereRand4p(iterations, ransacThreshold, rMin, rMax, inliers, S0, r, inlierIndices);
+    
+    // Adjacency method
     pointCloudProcessor.detectSphereWithAdjacency(iterations, adjacencyThreshold, ransacThreshold, rMin, rMax, inliers, S0, r, inlierIndices);
     pointCloudProcessor.colorInlierIndicesRed(inlierIndices);
     pointCloudProcessor.writePlys();

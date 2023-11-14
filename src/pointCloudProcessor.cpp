@@ -4,6 +4,45 @@
 #include <cmath>
 #include <Eigen/Dense>
 
+void PointCloudProcessor::detectSphereRand4p(int iterations, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices) {
+    // Iterate through each point cloud
+    for (const auto& pointCloud : pointClouds) {
+        int numPts = static_cast<int>(pointCloud.size());
+        std::vector<int> inlierIdxs;
+
+        for (int i = 1; i <= iterations; ++i) {
+            // generate 4 random indices
+            std::vector<int> inlierIdxsTmp = generateRandomIndices(numPts, 4);
+
+            // find sphere parameters
+            Eigen::Vector3f S0_tmp;
+            float r_tmp;
+            fitSphereNonit(pointCloud, inlierIdxsTmp, S0_tmp, r_tmp);
+
+            // optional speed-up
+            if (r_tmp > rMin && r_tmp < rMax) {
+                // label points
+                std::vector<int> inlierIdxsTmpUpdated;
+                classifySpherePoints(pointCloud, S0_tmp, r_tmp, ransacThreshold, inlierIdxsTmpUpdated);
+
+                // save the best model
+                if (inlierIdxsTmpUpdated.size() > inlierIdxs.size()) {
+                    inlierIdxs = std::move(inlierIdxsTmpUpdated);
+                }
+            }
+        }
+
+        // re-fit
+        inliers.insert(inliers.end(), pointCloud.begin(), pointCloud.end());
+
+        // Save the inlier indices
+        inlierIndices.insert(inlierIndices.end(), inlierIdxs.begin(), inlierIdxs.end());
+    }
+
+    // Fit the sphere to all inliers
+    fitSphereLsq(inliers, S0, r);
+}
+
 void PointCloudProcessor::detectSphereWithAdjacency(int iterations, int adjacencyThreshold, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices) {
     for (std::vector<Eigen::Vector3f> pointCloud : pointClouds) {
         std::vector<Eigen::Vector3f> bestInlierPoints;
@@ -260,4 +299,21 @@ void PointCloudProcessor::colorInlierIndicesRed(std::vector<int>& inlierIndices)
             }
         }
     }
+}
+
+std::vector<int> PointCloudProcessor::generateRandomIndices(int numPts, int numRandomIndices) {
+    std::vector<int> indices(numPts);
+    for (int i = 0; i < numPts; ++i) {
+        indices[i] = i;
+    }
+
+    // Use a random device and a random engine to shuffle the indices
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(indices.begin(), indices.end(), g);
+
+    // Take the first numRandomIndices elements as the result
+    indices.resize(numRandomIndices);
+
+    return indices;
 }
