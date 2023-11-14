@@ -3,6 +3,7 @@
 #include <random>
 #include <cmath>
 #include <Eigen/Dense>
+#include <pcl/kdtree/kdtree_flann.h>
 
 void PointCloudProcessor::detectSphereRand4p(int iterations, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices) {
     // Iterate through each point cloud
@@ -86,23 +87,28 @@ void PointCloudProcessor::detectSphereWithAdjacency(int iterations, int adjacenc
     }
 }
 
-// We could use a already existing optimal solution for finding the K nearest neighbours. (for example nanoflann)
 void PointCloudProcessor::findKNearestNeighbors(const std::vector<Eigen::Vector3f>& pointCloud, const Eigen::Vector3f& queryPoint, std::vector<int>& indices, int k) {
-    indices.clear();
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
 
-    // Calculate distances and store indices
-    std::vector<std::pair<float, int>> distances;
-
-    for (int i = 0; i < pointCloud.size(); ++i) {
-        float distance = (pointCloud[i] - queryPoint).norm();
-        distances.emplace_back(distance, i);
+    // Convert Eigen vector input to PCL point cloud
+    pclCloud->points.resize(pointCloud.size());
+    for (size_t i = 0; i < pointCloud.size(); ++i) {
+        pclCloud->points[i].x = pointCloud[i](0);
+        pclCloud->points[i].y = pointCloud[i](1);
+        pclCloud->points[i].z = pointCloud[i](2);
     }
 
-    // Sort distances and select the first k indices
-    std::sort(distances.begin(), distances.end());
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    kdtree.setInputCloud(pclCloud);
 
-    for (int i = 0; i < k; ++i) {
-        indices.push_back(distances[i].second);
+    std::vector<int> pointIdxNKNSearch(k);
+    std::vector<float> pointNKNSquaredDistance(k);
+
+    if (kdtree.nearestKSearch(pcl::PointXYZ(queryPoint(0), queryPoint(1), queryPoint(2)), k, pointIdxNKNSearch, pointNKNSquaredDistance) > 0) {
+        indices = pointIdxNKNSearch;
+    }
+    else {
+        indices.clear();  // No neighbors found.
     }
 }
 
