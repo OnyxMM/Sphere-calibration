@@ -12,7 +12,7 @@
 
 namespace lib {
 
-    void readPlyFiles(const std::vector<std::string>& filePaths, std::vector<std::vector<cv::Point3f>>& pointClouds, std::vector<std::vector<cv::Vec3i>>& colorClouds) {
+    void readPlyFiles(const std::vector<std::string>& filePaths, std::vector<std::vector<Eigen::Vector3f>>& pointClouds, std::vector<std::vector<cv::Vec3i>>& colorClouds) {
         int numScan = filePaths.size();
 
         if (numScan < 1) {
@@ -28,7 +28,7 @@ namespace lib {
         }
     }
 
-    void readPlyFile(const std::string& plyFile, std::vector<cv::Point3f>& pointCloud, std::vector<cv::Vec3i>& colorCloud) {
+    void readPlyFile(const std::string& plyFile, std::vector<Eigen::Vector3f>& pointCloud, std::vector<cv::Vec3i>& colorCloud) {
         std::ifstream file(plyFile);
 
         if (!file.is_open()) {
@@ -56,10 +56,12 @@ namespace lib {
         pointCloud.resize(numVertices);
         colorCloud.resize(numVertices);
 
+        int alphaTmp;
+
         for (int i = 0; i < numVertices; i++) {
-            cv::Point3f& p = pointCloud[i];
+            Eigen::Vector3f& p = pointCloud[i];
             cv::Vec3i& color = colorCloud[i];
-            file >> p.x >> p.y >> p.z >> color[2] >> color[1] >> color[0]; // Read color in reverse order (BGR).
+            file >> p.x() >> p.y() >> p.z() >> color[2] >> color[1] >> color[0] >> alphaTmp; // Read color in reverse order (BGR).
         }
 
         file.close();
@@ -80,7 +82,7 @@ namespace lib {
         }
     }
 
-    void writePlys(const std::vector<std::vector<cv::Point3f>>& pointClouds, const std::vector<std::vector<cv::Vec3i>>& colorClouds) {
+    void writePlys(const std::vector<std::vector<Eigen::Vector3f>>& pointClouds, const std::vector<std::vector<cv::Vec3i>>& colorClouds) {
         std::filesystem::create_directory("output"); // Create "output" folder if it doesn't exist
 
         for (int i = 0; i < pointClouds.size(); i++) {
@@ -90,7 +92,7 @@ namespace lib {
         }
     }
 
-    void writePly(const std::string& fileName, const std::vector<cv::Point3f>& pointCloud, const std::vector<cv::Vec3i>& colorCloud) {
+    void writePly(const std::string& fileName, const std::vector<Eigen::Vector3f>& pointCloud, const std::vector<cv::Vec3i>& colorCloud) {
         if (pointCloud.size() != colorCloud.size()) {
             std::cerr << "Error: Number of points and colors do not match." << std::endl;
             return;
@@ -115,7 +117,7 @@ namespace lib {
 
         for (size_t i = 0; i < pointCloud.size(); i++) {
             file << std::fixed << std::setprecision(7)
-                << pointCloud[i].x << " " << pointCloud[i].y << " " << pointCloud[i].z << " "
+                << pointCloud[i](0) << " " << pointCloud[i](1) << " " << pointCloud[i](2) << " "
                 << colorCloud[i][2] << " " << colorCloud[i][1] << " " << colorCloud[i][0]
                 << std::endl;
         }
@@ -130,15 +132,15 @@ namespace lib {
         }
     }
 
-    void displayPointClouds(const std::vector<std::vector<cv::Point3f>>& pointClouds, const std::vector<std::vector<cv::Vec3i>>& colorClouds) {
+    void displayPointClouds(const std::vector<std::vector<Eigen::Vector3f>>& pointClouds, const std::vector<std::vector<cv::Vec3i>>& colorClouds) {
         for (int i = 0; i < pointClouds.size(); i++) {
             // Display the first few points from each point cloud
             std::cout << "Point Cloud " << i + 1 << ":\n";
             for (int j = 0; j < std::min(5, static_cast<int>(pointClouds[i].size())); j++) {
-                cv::Point3f p = pointClouds[i][j];
+                Eigen::Vector3f p = pointClouds[i][j];
                 cv::Vec3i color = colorClouds[i][j];
 
-                std::cout << "Point " << j + 1 << ": (" << p.x << ", " << p.y << ", " << p.z
+                std::cout << "Point " << j + 1 << ": (" << p(0) << ", " << p(1) << ", " << p(2)
                     << "), Color: (" << color[2] << ", " << color[1] << ", " << color[0] << ")\n";
             }
         }
