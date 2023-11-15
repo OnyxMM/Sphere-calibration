@@ -3,6 +3,7 @@
 #include <random>
 #include <cmath>
 #include <Eigen/Dense>
+#include <pcl/point_types.h>
 #include <pcl/kdtree/kdtree_flann.h>
 
 void PointCloudProcessor::detectSphereRand4p(int iterations, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices) {
@@ -86,6 +87,68 @@ void PointCloudProcessor::detectSphereWithAdjacency(int iterations, int adjacenc
         fitSphereLsq(inliers, S0, r);
     }
 }
+
+void PointCloudProcessor::detectSphereWithDistance(int iterations, float distanceThreshold, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices) {
+    inliers.clear();
+    inlierIndices.clear();
+
+    for (const auto& pointCloud : pointClouds) {
+        int numPts = static_cast<int>(pointCloud.size());
+        std::vector<int> inlierIdxs;
+
+        pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
+        pclCloud->points.resize(numPts);
+
+        // Convert Eigen vector input to PCL point cloud
+        for (size_t i = 0; i < numPts; ++i) {
+            pclCloud->points[i].x = pointCloud[i](0);
+            pclCloud->points[i].y = pointCloud[i](1);
+            pclCloud->points[i].z = pointCloud[i](2);
+        }
+
+        pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+        kdtree.setInputCloud(pclCloud);
+
+        for (int i = 1; i <= iterations; ++i) {
+            // generate 1 random index
+            int randIdx = rand() % numPts;
+
+            // select initial subset within distanceThreshold
+            std::vector<int> inlierIdxsTmp;
+            std::vector<float> pointNKNSquaredDistance;
+            kdtree.radiusSearch(pcl::PointXYZ(pclCloud->points[randIdx].x, pclCloud->points[randIdx].y, pclCloud->points[randIdx].z), distanceThreshold, inlierIdxsTmp, pointNKNSquaredDistance);
+
+            // find sphere parameters
+            if (inlierIdxsTmp.size() > 4) {
+                Eigen::Vector3f S0_tmp;
+                float r_tmp;
+                fitSphereNonit(pointCloud, inlierIdxsTmp, S0_tmp, r_tmp);
+
+                // optional speed-up
+                if (r_tmp > rMin && r_tmp < rMax) {
+                    // label points
+                    std::vector<int> inlierIdxsTmpUpdated;
+                    classifySpherePoints(pointCloud, S0_tmp, r_tmp, ransacThreshold, inlierIdxsTmpUpdated);
+
+                    // save the best model
+                    if (inlierIdxsTmpUpdated.size() > inlierIdxs.size()) {
+                        inlierIdxs = std::move(inlierIdxsTmpUpdated);
+                    }
+                }
+            }
+        }
+
+        // re-fit
+        for (int idx : inlierIdxs) {
+            inliers.push_back(pointCloud[idx]);
+            inlierIndices.push_back(idx);
+        }
+    }
+
+    // Fit the sphere to all inliers
+    fitSphereLsq(inliers, S0, r);
+}
+
 
 void PointCloudProcessor::findKNearestNeighbors(const std::vector<Eigen::Vector3f>& pointCloud, const Eigen::Vector3f& queryPoint, std::vector<int>& indices, int k) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);

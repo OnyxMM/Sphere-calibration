@@ -16,6 +16,7 @@ int main() {
     int iterations = 10000;
     int adjacencyThreshold = 30;
     float ransacThreshold = 0.05;
+    float distanceThreshold = 0.15;
     float rMin = 0.1;
     float rMax = 0.5;
     std::vector<Eigen::Vector3f> inliers;
@@ -27,7 +28,12 @@ int main() {
     //pointCloudProcessor.detectSphereRand4p(iterations, ransacThreshold, rMin, rMax, inliers, S0, r, inlierIndices);
     
     // Adjacency method
-    pointCloudProcessor.detectSphereWithAdjacency(iterations, adjacencyThreshold, ransacThreshold, rMin, rMax, inliers, S0, r, inlierIndices);
+    //pointCloudProcessor.detectSphereWithAdjacency(iterations, adjacencyThreshold, ransacThreshold, rMin, rMax, inliers, S0, r, inlierIndices);
+
+    // Distance method
+    pointCloudProcessor.detectSphereWithDistance(iterations, distanceThreshold, ransacThreshold, rMin, rMax, inliers, S0, r, inlierIndices);
+
+    // Output result
     pointCloudProcessor.colorInlierIndicesRed(inlierIndices);
     pointCloudProcessor.writePlys();
 
