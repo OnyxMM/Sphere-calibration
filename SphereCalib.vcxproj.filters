@@ -24,12 +24,18 @@
     <ClCompile Include="src\lib.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\imageProcessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\pointCloudProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\lib.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imageProcessor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

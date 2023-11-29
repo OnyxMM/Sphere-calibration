@@ -19,11 +19,13 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\imageProcessor.cpp" />
     <ClCompile Include="src\lib.cpp" />
     <ClCompile Include="src\pointCloudProcessor.cpp" />
     <ClCompile Include="src\SphereCalib.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\imageProcessor.h" />
     <ClInclude Include="include\pointCloudProcessor.h" />
     <ClInclude Include="include\lib.h" />
   </ItemGroup>
