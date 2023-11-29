@@ -52,6 +52,4 @@ public:
     }
 
     void colorInlierIndicesRed(std::vector<int>& inlierIndices);
-
-    std::vector<int> generateRandomIndices(int numPts, int numRandomIndices);
 };

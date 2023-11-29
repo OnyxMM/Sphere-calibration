@@ -14,7 +14,7 @@ void PointCloudProcessor::detectSphereRand4p(int iterations, float ransacThresho
 
         for (int i = 1; i <= iterations; ++i) {
             // generate 4 random indices
-            std::vector<int> inlierIdxsTmp = generateRandomIndices(numPts, 4);
+            std::vector<int> inlierIdxsTmp = lib::generateRandomIndices(numPts, 4);
 
             // find sphere parameters
             Eigen::Vector3f S0_tmp;

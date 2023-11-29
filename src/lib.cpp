@@ -145,4 +145,21 @@ namespace lib {
             }
         }
     }
+
+    std::vector<int> generateRandomIndices(int numPts, int numRandomIndices) {
+        std::vector<int> indices(numPts);
+        for (int i = 0; i < numPts; ++i) {
+            indices[i] = i;
+        }
+
+        // Use a random device and a random engine to shuffle the indices
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(indices.begin(), indices.end(), g);
+
+        // Take the first numRandomIndices elements as the result
+        indices.resize(numRandomIndices);
+
+        return indices;
+    }
 } // namespace lib

@@ -15,4 +15,5 @@ namespace lib {
 
     void displayImages(const std::vector<cv::Mat>& imgs);
     void displayPointClouds(const std::vector<std::vector<Eigen::Vector3f>>& pointClouds, const std::vector<std::vector<cv::Vec3i>>& colorClouds);
+    std::vector<int> generateRandomIndices(int numPts, int numRandomIndices);
 }  // namespace lib
