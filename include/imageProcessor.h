@@ -39,12 +39,17 @@ public:
         double rCam,
         int camRansac);
 
-    void detectSphereCenters();
+    void detectSphereCenters(Eigen::MatrixXf& inliers, Eigen::Vector3f& S0);
 
 private:
     cv::Mat rgb2gray(const cv::Mat& img);
     cv::Mat getEdgePoints(const cv::Mat& grayImg);
     Eigen::MatrixXi getIdxList(const cv::Mat& edgeImg);
     Eigen::MatrixXf pixel2meter(const Eigen::MatrixXf& points_pix);
-    // TODO RANSAC
+    Eigen::MatrixXf meter2pixel(const Eigen::MatrixXf& points_m);
+    void detectSphereRand3p(const Eigen::MatrixXf& points_m, Eigen::MatrixXf& inliers, Eigen::Vector3f& S0);
+    Eigen::VectorXf fitEllipse3p(const Eigen::MatrixXf& XY);
+    Eigen::ArrayXf pointEllipseDistance(const Eigen::ArrayXf& px, const Eigen::ArrayXf& py, float a, float b, float ex, float ey, float theta);
+    std::vector<int> classifyEllipsePoints(const Eigen::MatrixXf& points, const Eigen::VectorXf& ellipseParam);
+    Eigen::Vector3f fitSphere3p(const Eigen::MatrixXf& inliersMat);
 };

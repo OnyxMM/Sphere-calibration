@@ -54,12 +54,15 @@ int main() {
     double rMaxCam = u0 / fu;
     int camRansac = 2;
 
-    ImageProcessor imageProcessor(imgPaths, edgeDetect, edgeThreshold, iterationsRCam, ransacThresholdCam, rMinCam, rMaxCam, fu, fv, u0, v0, rLid, camRansac);
+    ImageProcessor imageProcessor(imgPaths, edgeDetect, edgeThreshold, iterationsRCam, ransacThresholdCam, rMinCam, rMaxCam, fu, fv, u0, v0, 3.5f, camRansac);
 
     Eigen::MatrixXf inliersCam;
     Eigen::Vector3f S0Cam;
 
-    imageProcessor.detectSphereCenters(/* TODO RANSAC inliersCam, S0Cam */);
+    imageProcessor.detectSphereCenters(inliersCam, S0Cam);
+
+    pointCloudProcessor.colorInlierIndicesRed(inlierIndices, S0Lid, S0Cam);
+    pointCloudProcessor.writePlys();
 
     return 0;
 }
