@@ -45,43 +45,43 @@ ImageProcessor::ImageProcessor(const std::string& imgPath,
 
 void ImageProcessor::detectSphereCenters(Eigen::MatrixXf& inliers, Eigen::Vector3f& S0)
 {
-        // Perform processing on each image
-        cv::Mat grayImg = rgb2gray(img);
+    // Perform processing on each image
+    cv::Mat grayImg = rgb2gray(img);
 
-        // Get edge points from the current image
-        cv::Mat edgeImg = getEdgePoints(grayImg);
+    // Get edge points from the current image
+    cv::Mat edgeImg = getEdgePoints(grayImg);
 
-        // Convert edge points to Eigen MatrixXf
-        Eigen::MatrixXi edgeIndices = getIdxList(edgeImg);
+    // Convert edge points to Eigen MatrixXf
+    Eigen::MatrixXi edgeIndices = getIdxList(edgeImg);
 
-        // Swap x and y to have x as horizontal and y as vertical axis
-        Eigen::MatrixXf points_pix(edgeIndices.rows(), 2);
-        points_pix << edgeIndices.col(1).cast<float>(), edgeIndices.col(0).cast<float>();
+    // Swap x and y to have x as horizontal and y as vertical axis
+    Eigen::MatrixXf points_pix(edgeIndices.rows(), 2);
+    points_pix << edgeIndices.col(1).cast<float>(), edgeIndices.col(0).cast<float>();
 
     // Visualization of the selected edges
     lib::visualizePoints(img, points_pix, Eigen::Vector2f(0,0), "Selected edges: " + imgPath, imgPath);
 
-        // Normalize coordinates
-        Eigen::MatrixXf points_m = pixel2meter(points_pix);
+    // Normalize coordinates
+    Eigen::MatrixXf points_m = pixel2meter(points_pix);
 
-        switch (camRansac)
-        {
-        case 1:
+    switch (camRansac)
+    {
+    case 1:
         // TODO
-            break;
-        case 2:
-            detectSphereRand3p(points_m, inliers, S0);
-            break;
-        default:
-            break;
-        }
+        break;
+    case 2:
+        detectSphereRand3p(points_m, inliers, S0);
+        break;
+    default:
+        break;
+    }
 
     Eigen::MatrixXf inliersNormalized = meter2pixel(inliers);
     Eigen::MatrixXf S0Normalized = meter2pixel(S0);
 
     // Visualization of inliers and sphere center
     lib::visualizePoints(img, inliersNormalized, S0Normalized, "Inliers and sphere center: " + imgPath, imgPath);
-    }
+}
 
 cv::Mat ImageProcessor::rgb2gray(const cv::Mat& img)
 {
@@ -334,29 +334,28 @@ std::vector<int> ImageProcessor::classifyEllipsePoints(const Eigen::MatrixXf& po
     return inlierIdxs;
 }
 
-Eigen::Vector3f ImageProcessor::fitSphere3p(const Eigen::MatrixXf& inliersMat)
-{
-    int numPts = inliersMat.rows();
+Eigen::Vector3f ImageProcessor::fitSphere3p(const Eigen::MatrixXf& XY) {
+    int numPts = XY.rows();
 
     // Add third coordinate z=1 and normalize points
     Eigen::MatrixXf XY_h(numPts, 3);
-    XY_h << inliersMat, Eigen::MatrixXf::Ones(numPts, 1);
-    Eigen::MatrixXf XY_h_norm = XY_h.rowwise().normalized();
-
-    // Element-wise multiplication for the first three columns
-    Eigen::MatrixXf result(numPts, 3);
-    result.col(0) = XY_h_norm.col(0).cwiseProduct(XY_h.col(0));
-    result.col(1) = XY_h_norm.col(1).cwiseProduct(XY_h.col(1));
-    result.col(2) = XY_h_norm.col(2).cwiseProduct(XY_h.col(2));
+    XY_h << XY, Eigen::MatrixXf::Ones(numPts, 1);
+    XY_h = (XY_h.array().colwise() / XY_h.rowwise().norm().array()).matrix();
 
     // Find the axis direction and angle of the cone
-    Eigen::VectorXf wPerCosAlpha = result.col(0).householderQr().solve(Eigen::VectorXf::Ones(numPts));
-    float cosAlpha = 1 / wPerCosAlpha.norm();
-    float wScalar = cosAlpha * wPerCosAlpha(0);
+    Eigen::VectorXf wPerCosAlpha = XY_h.colPivHouseholderQr().solve(Eigen::VectorXf::Ones(numPts));
+    float cosAlpha = 1.0 / wPerCosAlpha.norm();
+    Eigen::VectorXf w = cosAlpha * wPerCosAlpha;
 
     // Direction vector of the cone axis
     float d = rCam / sqrt(1 - cosAlpha * cosAlpha);
 
-    Eigen::Vector3f S0 = d * Eigen::Vector3f(wScalar, wScalar, wScalar);
+    Eigen::Vector3f S0 = d * w;
+
+    // Output information for debugging or verification
+    std::cout << "Axis Direction Vector (w): " << w << std::endl;
+    std::cout << "Decompression Factor (d): " << d << std::endl;
+    std::cout << "Sphere Center (S0): " << S0 << std::endl;
+
     return S0;
 }
