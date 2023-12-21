@@ -11,14 +11,14 @@
 
 class PointCloudProcessor
 {
-    std::vector<std::vector<Eigen::Vector3f>> pointClouds;
-    std::vector<std::vector<cv::Vec3i>> colorClouds;
+    std::vector<Eigen::Vector3f> pointCloud;
+    std::vector<cv::Vec3i> colorCloud;
 
 public:
-    PointCloudProcessor(const std::vector<std::string>& filePaths)
+    PointCloudProcessor(const std::string& filePath)
     {
         try {
-            lib::readPlyFiles(filePaths, pointClouds, colorClouds);
+            lib::readXYZFile(filePath, pointCloud);
         }
         catch (const std::runtime_error& e) {
             std::cerr << "Error: " << e.what() << std::endl;
@@ -43,13 +43,13 @@ public:
 
     Eigen::Vector3f fitSphere4p(const std::vector<Eigen::Vector3f>& points);
 
-    void displayPointClouds() {
-        lib::displayPointClouds(pointClouds, colorClouds);
+    void displayPointCloud() {
+        lib::displayPointCloud(pointCloud);
     }
 
-    void writePlys() {
-        lib::writePlys(pointClouds, colorClouds);
+    void writeFile(std::string path) {
+        lib::writePly(path, pointCloud, colorCloud);
     }
 
-    void colorInlierIndicesRed(std::vector<int>& inlierIndices);
+    void colorInlierIndicesRed(std::vector<int>& inlierIndices, const Eigen::Vector3f& S0Lid);
 };

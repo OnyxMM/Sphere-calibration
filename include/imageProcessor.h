@@ -21,11 +21,12 @@ private:
     float v0;
     double rCam;
     int camRansac;
+    const std::string& imgPath;
 
 public:
-    std::vector<cv::Mat> images;
+    cv::Mat img;
 
-    ImageProcessor(const std::vector<std::string>& imgPaths,
+    ImageProcessor(const std::string& imgPath,
         int edgeDetect,
         double edgeThreshold,
         int iterationsRCam,
@@ -47,6 +48,7 @@ private:
     Eigen::MatrixXi getIdxList(const cv::Mat& edgeImg);
     Eigen::MatrixXf pixel2meter(const Eigen::MatrixXf& points_pix);
     Eigen::MatrixXf meter2pixel(const Eigen::MatrixXf& points_m);
+    Eigen::Vector2f meter2pixel(const Eigen::Vector3f& point_m);
     void detectSphereRand3p(const Eigen::MatrixXf& points_m, Eigen::MatrixXf& inliers, Eigen::Vector3f& S0);
     Eigen::VectorXf fitEllipse3p(const Eigen::MatrixXf& XY);
     Eigen::ArrayXf pointEllipseDistance(const Eigen::ArrayXf& px, const Eigen::ArrayXf& py, float a, float b, float ex, float ey, float theta);

@@ -7,16 +7,113 @@
 #include <pcl/kdtree/kdtree_flann.h>
 
 void PointCloudProcessor::detectSphereRand4p(int iterations, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices) {
-    // Iterate through each point cloud
-    for (const auto& pointCloud : pointClouds) {
-        int numPts = static_cast<int>(pointCloud.size());
-        std::vector<int> inlierIdxs;
+    int numPts = static_cast<int>(pointCloud.size());
+    std::vector<int> inlierIdxs;
 
-        for (int i = 1; i <= iterations; ++i) {
-            // generate 4 random indices
-            std::vector<int> inlierIdxsTmp = lib::generateRandomIndices(numPts, 4);
+    for (int i = 1; i <= iterations; ++i) {
+        // generate 4 random indices
+        std::vector<int> inlierIdxsTmp = lib::generateRandomIndices(numPts, 4);
 
-            // find sphere parameters
+        // find sphere parameters
+        Eigen::Vector3f S0_tmp;
+        float r_tmp;
+        fitSphereNonit(pointCloud, inlierIdxsTmp, S0_tmp, r_tmp);
+
+        // optional speed-up
+        if (r_tmp > rMin && r_tmp < rMax) {
+            // label points
+            std::vector<int> inlierIdxsTmpUpdated;
+            classifySpherePoints(pointCloud, S0_tmp, r_tmp, ransacThreshold, inlierIdxsTmpUpdated);
+
+            // save the best model
+            if (inlierIdxsTmpUpdated.size() > inlierIdxs.size()) {
+                inlierIdxs = std::move(inlierIdxsTmpUpdated);
+            }
+        }
+    }
+
+    // re-fit
+    inliers.insert(inliers.end(), pointCloud.begin(), pointCloud.end());
+
+    // Save the inlier indices
+    inlierIndices.insert(inlierIndices.end(), inlierIdxs.begin(), inlierIdxs.end());
+
+    // Fit the sphere to all inliers
+    fitSphereLsq(inliers, S0, r);
+}
+
+void PointCloudProcessor::detectSphereWithAdjacency(int iterations, int adjacencyThreshold, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices) {
+    std::vector<Eigen::Vector3f> bestInlierPoints;
+
+    std::default_random_engine generator;
+    std::uniform_int_distribution<int> distribution(0, pointCloud.size() - 1);
+
+    for (int i = 0; i < iterations; i++) {
+        // Generate 1 random point
+        int randIdx = distribution(generator);
+
+        // Select initial subset
+        std::vector<int> initialInlierIndices;
+        findKNearestNeighbors(pointCloud, pointCloud[randIdx], initialInlierIndices, adjacencyThreshold);
+
+        // Find sphere parameters
+        Eigen::Vector3f S0Tmp;
+        float rTmp;
+        fitSphereNonit(pointCloud, initialInlierIndices, S0Tmp, rTmp);
+
+        // Optional speed-up: check if the radius is within the valid range
+        if (rTmp > rMin && rTmp < rMax) {
+            // Label points
+            std::vector<int> currentInlierIndices;
+            classifySpherePoints(pointCloud, S0Tmp, rTmp, ransacThreshold, currentInlierIndices);
+
+            // Save the best model
+            if (currentInlierIndices.size() > bestInlierPoints.size()) {
+                pointsFromIndices(pointCloud, currentInlierIndices, bestInlierPoints);
+
+                // Append the current inlier indices to the inlierIndices
+                inlierIndices.clear();
+                inlierIndices.insert(inlierIndices.end(), currentInlierIndices.begin(), currentInlierIndices.end());
+            }
+        }
+    }
+
+    // Re-fit the best inliers
+    inliers = bestInlierPoints;
+    fitSphereLsq(inliers, S0, r);
+}
+
+void PointCloudProcessor::detectSphereWithDistance(int iterations, float distanceThreshold, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices) {
+    inliers.clear();
+    inlierIndices.clear();
+
+    int numPts = static_cast<int>(pointCloud.size());
+    std::vector<int> inlierIdxs;
+
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pclCloud->points.resize(numPts);
+
+    // Convert Eigen vector input to PCL point cloud
+    for (size_t i = 0; i < numPts; ++i) {
+        pclCloud->points[i].x = pointCloud[i](0);
+        pclCloud->points[i].y = pointCloud[i](1);
+        pclCloud->points[i].z = pointCloud[i](2);
+    }
+
+    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+    kdtree.setInputCloud(pclCloud);
+
+    for (int i = 1; i <= iterations; ++i) {
+        // generate 1 random index
+        int randIdx = rand() % numPts;
+
+        // select initial subset within distanceThreshold
+        std::vector<int> inlierIdxsTmp;
+        std::vector<float> pointNKNSquaredDistance;
+        kdtree.radiusSearch(pcl::PointXYZ(pclCloud->points[randIdx].x, pclCloud->points[randIdx].y, pclCloud->points[randIdx].z), distanceThreshold, inlierIdxsTmp, pointNKNSquaredDistance);
+
+        // find sphere parameters
+        if (inlierIdxsTmp.size() > 4) {
             Eigen::Vector3f S0_tmp;
             float r_tmp;
             fitSphereNonit(pointCloud, inlierIdxsTmp, S0_tmp, r_tmp);
@@ -33,116 +130,12 @@ void PointCloudProcessor::detectSphereRand4p(int iterations, float ransacThresho
                 }
             }
         }
-
-        // re-fit
-        inliers.insert(inliers.end(), pointCloud.begin(), pointCloud.end());
-
-        // Save the inlier indices
-        inlierIndices.insert(inlierIndices.end(), inlierIdxs.begin(), inlierIdxs.end());
     }
 
-    // Fit the sphere to all inliers
-    fitSphereLsq(inliers, S0, r);
-}
-
-void PointCloudProcessor::detectSphereWithAdjacency(int iterations, int adjacencyThreshold, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices) {
-    for (std::vector<Eigen::Vector3f> pointCloud : pointClouds) {
-        std::vector<Eigen::Vector3f> bestInlierPoints;
-
-        std::default_random_engine generator;
-        std::uniform_int_distribution<int> distribution(0, pointCloud.size() - 1);
-
-        for (int i = 0; i < iterations; i++) {
-            // Generate 1 random point
-            int randIdx = distribution(generator);
-
-            // Select initial subset
-            std::vector<int> initialInlierIndices;
-            findKNearestNeighbors(pointCloud, pointCloud[randIdx], initialInlierIndices, adjacencyThreshold);
-
-            // Find sphere parameters
-            Eigen::Vector3f S0Tmp;
-            float rTmp;
-            fitSphereNonit(pointCloud, initialInlierIndices, S0Tmp, rTmp);
-
-            // Optional speed-up: check if the radius is within the valid range
-            if (rTmp > rMin && rTmp < rMax) {
-                // Label points
-                std::vector<int> currentInlierIndices;
-                classifySpherePoints(pointCloud, S0Tmp, rTmp, ransacThreshold, currentInlierIndices);
-
-                // Save the best model
-                if (currentInlierIndices.size() > bestInlierPoints.size()) {
-                    pointsFromIndices(pointCloud, currentInlierIndices, bestInlierPoints);
-
-                    // Append the current inlier indices to the inlierIndices
-                    inlierIndices.clear();
-                    inlierIndices.insert(inlierIndices.end(), currentInlierIndices.begin(), currentInlierIndices.end());
-                }
-            }
-        }
-
-        // Re-fit the best inliers
-        inliers = bestInlierPoints;
-        fitSphereLsq(inliers, S0, r);
-    }
-}
-
-void PointCloudProcessor::detectSphereWithDistance(int iterations, float distanceThreshold, float ransacThreshold, float rMin, float rMax, std::vector<Eigen::Vector3f>& inliers, Eigen::Vector3f& S0, float& r, std::vector<int>& inlierIndices) {
-    inliers.clear();
-    inlierIndices.clear();
-
-    for (const auto& pointCloud : pointClouds) {
-        int numPts = static_cast<int>(pointCloud.size());
-        std::vector<int> inlierIdxs;
-
-        pcl::PointCloud<pcl::PointXYZ>::Ptr pclCloud(new pcl::PointCloud<pcl::PointXYZ>);
-        pclCloud->points.resize(numPts);
-
-        // Convert Eigen vector input to PCL point cloud
-        for (size_t i = 0; i < numPts; ++i) {
-            pclCloud->points[i].x = pointCloud[i](0);
-            pclCloud->points[i].y = pointCloud[i](1);
-            pclCloud->points[i].z = pointCloud[i](2);
-        }
-
-        pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
-        kdtree.setInputCloud(pclCloud);
-
-        for (int i = 1; i <= iterations; ++i) {
-            // generate 1 random index
-            int randIdx = rand() % numPts;
-
-            // select initial subset within distanceThreshold
-            std::vector<int> inlierIdxsTmp;
-            std::vector<float> pointNKNSquaredDistance;
-            kdtree.radiusSearch(pcl::PointXYZ(pclCloud->points[randIdx].x, pclCloud->points[randIdx].y, pclCloud->points[randIdx].z), distanceThreshold, inlierIdxsTmp, pointNKNSquaredDistance);
-
-            // find sphere parameters
-            if (inlierIdxsTmp.size() > 4) {
-                Eigen::Vector3f S0_tmp;
-                float r_tmp;
-                fitSphereNonit(pointCloud, inlierIdxsTmp, S0_tmp, r_tmp);
-
-                // optional speed-up
-                if (r_tmp > rMin && r_tmp < rMax) {
-                    // label points
-                    std::vector<int> inlierIdxsTmpUpdated;
-                    classifySpherePoints(pointCloud, S0_tmp, r_tmp, ransacThreshold, inlierIdxsTmpUpdated);
-
-                    // save the best model
-                    if (inlierIdxsTmpUpdated.size() > inlierIdxs.size()) {
-                        inlierIdxs = std::move(inlierIdxsTmpUpdated);
-                    }
-                }
-            }
-        }
-
-        // re-fit
-        for (int idx : inlierIdxs) {
-            inliers.push_back(pointCloud[idx]);
-            inlierIndices.push_back(idx);
-        }
+    // re-fit
+    for (int idx : inlierIdxs) {
+        inliers.push_back(pointCloud[idx]);
+        inlierIndices.push_back(idx);
     }
 
     // Fit the sphere to all inliers
@@ -293,7 +286,7 @@ void PointCloudProcessor::fitSphereLsq(const std::vector<Eigen::Vector3f>& point
         for (int k = j; k < j + 4; k++) {
             rnd4.push_back(normalizedPoints[idxs[k]]);
         }
-        fitSphere4p(rnd4); //S0Ini[i], r
+        S0Ini[i] = fitSphere4p(rnd4);
     }
 
     std::sort(S0Ini.begin(), S0Ini.end(), [](const Eigen::Vector3f& a, const Eigen::Vector3f& b) {
@@ -360,29 +353,24 @@ Eigen::Vector3f PointCloudProcessor::fitSphere4p(const std::vector<Eigen::Vector
     return S0;
 }
 
-void PointCloudProcessor::colorInlierIndicesRed(std::vector<int>& inlierIndices) {
-    for (std::vector<cv::Vec3i>& colorCloud : colorClouds) {
-        for (int index : inlierIndices) {
-            if (index >= 0 && index < colorCloud.size()) {
-                colorCloud[index] = cv::Vec3i(0, 0, 255);  // Set the color to red (BGR format)
-            }
+void PointCloudProcessor::colorInlierIndicesRed(std::vector<int>& inlierIndices, const Eigen::Vector3f& S0Lid) {
+    cv::Vec3i blackColor(0, 0, 0);  // Black color in BGR format
+    cv::Vec3i redColor(0, 0, 255);  // Red color in BGR format
+    cv::Vec3i greenColor(0, 255, 0);  // Green color in BGR format
+
+    // Ensure colorCloud has the same size as pointCloud
+    colorCloud.resize(pointCloud.size(), blackColor);  // Initialize all colors to black
+
+    for (int index : inlierIndices) {
+        if (index >= 0 && index < colorCloud.size()) {
+            // Set the color to red for the inlier indices
+            colorCloud[index] = redColor;
         }
     }
-}
 
-std::vector<int> PointCloudProcessor::generateRandomIndices(int numPts, int numRandomIndices) {
-    std::vector<int> indices(numPts);
-    for (int i = 0; i < numPts; ++i) {
-        indices[i] = i;
-    }
+    // Add the S0 point color
+    colorCloud.push_back(greenColor);
 
-    // Use a random device and a random engine to shuffle the indices
-    std::random_device rd;
-    std::mt19937 g(rd());
-    std::shuffle(indices.begin(), indices.end(), g);
-
-    // Take the first numRandomIndices elements as the result
-    indices.resize(numRandomIndices);
-
-    return indices;
+    // Add the S0 point
+    pointCloud.push_back(S0Lid);
 }

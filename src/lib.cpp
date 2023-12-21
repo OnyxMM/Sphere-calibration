@@ -5,34 +5,20 @@
 #include <filesystem>
 #include <iomanip>
 #include <algorithm>
+#include <random>
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui.hpp>
+#include <opencv2/core/eigen.hpp>
 
 namespace lib {
 
-    void readPlyFiles(const std::vector<std::string>& filePaths, std::vector<std::vector<Eigen::Vector3f>>& pointClouds, std::vector<std::vector<cv::Vec3i>>& colorClouds) {
-        int numScan = filePaths.size();
-
-        if (numScan < 1) {
-            throw std::runtime_error("Not enough ply input file names.");
-        }
-
-        pointClouds.resize(numScan);
-        colorClouds.resize(numScan);
-
-        for (int i = 0; i < numScan; i++) {
-            std::string scan3dFile = filePaths[i];
-            readPlyFile(scan3dFile, pointClouds[i], colorClouds[i]);
-        }
-    }
-
-    void readPlyFile(const std::string& plyFile, std::vector<Eigen::Vector3f>& pointCloud, std::vector<cv::Vec3i>& colorCloud) {
-        std::ifstream file(plyFile);
+    void readXYZFile(const std::string& xyzFile, std::vector<Eigen::Vector3f>& pointCloud) {
+        std::ifstream file(xyzFile);
 
         if (!file.is_open()) {
-            throw std::runtime_error("Failed to open PLY file.");
+            throw std::runtime_error("Failed to open XYZ file.");
         }
 
         std::string line;
@@ -40,65 +26,44 @@ namespace lib {
         bool readData = false;
 
         while (std::getline(file, line)) {
-            if (line.find("element vertex") != std::string::npos) {
-                sscanf_s(line.c_str(), "element vertex %d", &numVertices);
-            }
-            if (line == "end_header") {
-                readData = true;
-                break;
-            }
+            numVertices++;
         }
 
-        if (!readData) {
-            throw std::runtime_error("Invalid PLY file format.");
-        }
+        // Reset file position to the beginning
+        file.clear();
+        file.seekg(0, std::ios::beg);
 
         pointCloud.resize(numVertices);
-        colorCloud.resize(numVertices);
-
-        int alphaTmp;
 
         for (int i = 0; i < numVertices; i++) {
             Eigen::Vector3f& p = pointCloud[i];
-            cv::Vec3i& color = colorCloud[i];
-            file >> p.x() >> p.y() >> p.z() >> color[2] >> color[1] >> color[0] >> alphaTmp; // Read color in reverse order (BGR).
+            file >> p.x() >> p.y() >> p.z();
         }
 
         file.close();
     }
 
-    void readImages(const std::vector<std::string>& filePaths, std::vector<cv::Mat>& imgs) {
-        int numImgs = filePaths.size();
-
-        if (numImgs < 1) {
-            throw std::runtime_error("Not enough image input file names.");
-        }
-
-        imgs.resize(numImgs);
-
-        for (int i = 0; i < numImgs; i++) {
-            std::string imgFile = filePaths[i];
-            imgs[i] = cv::imread(imgFile, cv::IMREAD_COLOR);
-        }
+    void readImage(const std::string& filePath, cv::Mat& img) {
+        img = cv::imread(filePath, cv::IMREAD_COLOR);
     }
 
-    void writePlys(const std::vector<std::vector<Eigen::Vector3f>>& pointClouds, const std::vector<std::vector<cv::Vec3i>>& colorClouds) {
-        std::filesystem::create_directory("output"); // Create "output" folder if it doesn't exist
-
-        for (int i = 0; i < pointClouds.size(); i++) {
-            std::string outputFileName = "output/pointCloud" + std::to_string(i + 1);
-            writePly(outputFileName, pointClouds[i], colorClouds[i]);
-            std::cout << "Point cloud written to " << outputFileName << ".ply" << std::endl;
-        }
-    }
-
-    void writePly(const std::string& fileName, const std::vector<Eigen::Vector3f>& pointCloud, const std::vector<cv::Vec3i>& colorCloud) {
+    void writePly(const std::string& path, const std::vector<Eigen::Vector3f>& pointCloud, const std::vector<cv::Vec3i>& colorCloud) {
         if (pointCloud.size() != colorCloud.size()) {
             std::cerr << "Error: Number of points and colors do not match." << std::endl;
             return;
         }
 
-        std::ofstream file(fileName + ".ply");
+        // Replace "input" with "output" in the path
+        std::string updatedPath = path;
+        size_t pos = updatedPath.find("input");
+        if (pos != std::string::npos) {
+            updatedPath.replace(pos, 5, "output");
+        }
+
+        // Create directories if they don't exist
+        std::filesystem::create_directories(std::filesystem::path(updatedPath).parent_path());
+
+        std::ofstream file(updatedPath + ".ply");
         if (!file.is_open()) {
             std::cerr << "Error: Failed to open PLY file." << std::endl;
             return;
@@ -125,25 +90,53 @@ namespace lib {
         file.close();
     }
 
-    void displayImages(const std::vector<cv::Mat>& imgs) {
-        for (int i = 0; i < imgs.size(); i++) {
-            cv::imshow("Image " + std::to_string(i + 1), imgs[i]);
-            cv::waitKey(0);  // Wait for a key press (you may need to close the image window manually)
+    void displayPointCloud(const std::vector<Eigen::Vector3f>& pointCloud) {
+        // Display the first few points
+        for (int i = 0; i < std::min(5, static_cast<int>(pointCloud.size())); i++) {
+            Eigen::Vector3f p = pointCloud[i];
+
+            std::cout << "Point " << i + 1 << ": (" << p(0) << ", " << p(1) << ", " << p(2)
+                << ")\n";
         }
     }
 
-    void displayPointClouds(const std::vector<std::vector<Eigen::Vector3f>>& pointClouds, const std::vector<std::vector<cv::Vec3i>>& colorClouds) {
-        for (int i = 0; i < pointClouds.size(); i++) {
-            // Display the first few points from each point cloud
-            std::cout << "Point Cloud " << i + 1 << ":\n";
-            for (int j = 0; j < std::min(5, static_cast<int>(pointClouds[i].size())); j++) {
-                Eigen::Vector3f p = pointClouds[i][j];
-                cv::Vec3i color = colorClouds[i][j];
+    void lib::visualizePoints(const cv::Mat& originalImage, const Eigen::MatrixXf& inliersNormalized, const Eigen::Vector2f& S0Normalized, const std::string& windowName, const std::string& outputPath) {
+        cv::Mat imageWithCircles = originalImage.clone();
 
-                std::cout << "Point " << j + 1 << ": (" << p(0) << ", " << p(1) << ", " << p(2)
-                    << "), Color: (" << color[2] << ", " << color[1] << ", " << color[0] << ")\n";
-            }
+        // Ensure that points are in integer type (assuming pixel coordinates)
+        Eigen::MatrixXi scaledPoints = inliersNormalized.cast<int>();
+
+        // Draw circles at the point locations
+        for (int i = 0; i < scaledPoints.rows(); ++i) {
+            cv::Point center(scaledPoints(i, 0), scaledPoints(i, 1));
+            cv::circle(imageWithCircles, center, 5, cv::Scalar(0, 255, 0), -1); // Green circle
         }
+
+        // Draw a point for S0Normalized if its not set to default
+        if (S0Normalized(0) != 0 && S0Normalized(1) != 0) {
+            cv::Point s0Point(S0Normalized(0), S0Normalized(1));
+            cv::circle(imageWithCircles, s0Point, 5, cv::Scalar(255, 0, 0), -1); // Blue circle for S0Normalized
+        }
+
+        // Resize the image
+        cv::resize(imageWithCircles, imageWithCircles, cv::Size(), 0.5, 0.5);
+
+        // Display the resized image with circles
+        cv::imshow(windowName, imageWithCircles);
+
+        // Replace "input" with "output" in the path
+        std::string updatedPath = outputPath;
+        size_t pos = updatedPath.find("input");
+        if (pos != std::string::npos) {
+            updatedPath.replace(pos, 5, "output");
+        }
+
+        // Save the image to the specified output path
+        cv::imwrite(updatedPath, imageWithCircles);
+
+        // Wait for a key press and then close the window
+        cv::waitKey(0);
+        cv::destroyWindow(outputPath);
     }
 
     std::vector<int> generateRandomIndices(int numPts, int numRandomIndices) {

@@ -6,14 +6,11 @@
 #include <Eigen/Dense>
 
 namespace lib {
-    void readPlyFiles(const std::vector<std::string>& filePaths, std::vector<std::vector<Eigen::Vector3f>>& pointClouds, std::vector<std::vector<cv::Vec3i>>& colorClouds);
-    void readPlyFile(const std::string& plyFile, std::vector<Eigen::Vector3f>& pointCloud, std::vector<cv::Vec3i>& colorCloud);
-    void readImages(const std::vector<std::string>& filePaths, std::vector<cv::Mat>& imgs);
-
-    void writePlys(const std::vector<std::vector<Eigen::Vector3f>>& pointClouds, const std::vector<std::vector<cv::Vec3i>>& colorClouds);
+    void readXYZFile(const std::string& plyFile, std::vector<Eigen::Vector3f>& pointCloud);
+    void readImage(const std::string& filePath, cv::Mat& img);
     void writePly(const std::string& fileName, const std::vector<Eigen::Vector3f>& pointCloud, const std::vector<cv::Vec3i>& colorCloud);
 
-    void displayImages(const std::vector<cv::Mat>& imgs);
-    void displayPointClouds(const std::vector<std::vector<Eigen::Vector3f>>& pointClouds, const std::vector<std::vector<cv::Vec3i>>& colorClouds);
+    void displayPointCloud(const std::vector<Eigen::Vector3f>& pointCloud);
+    void visualizePoints(const cv::Mat& originalImage, const Eigen::MatrixXf& inliersNormalized, const Eigen::Vector2f& S0Normalized, const std::string& windowName, const std::string& outputPath);
     std::vector<int> generateRandomIndices(int numPts, int numRandomIndices);
 }  // namespace lib

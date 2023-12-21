@@ -13,7 +13,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-ImageProcessor::ImageProcessor(const std::vector<std::string>& imgPaths,
+ImageProcessor::ImageProcessor(const std::string& imgPath,
     int edgeDetect,
     double edgeThreshold,
     int iterationsRCam,
@@ -37,16 +37,14 @@ ImageProcessor::ImageProcessor(const std::vector<std::string>& imgPaths,
     u0(u0),
     v0(v0),
     rCam(rCam),
-    camRansac(camRansac)
+    camRansac(camRansac),
+    imgPath(imgPath)
 {
-    lib::readImages(imgPaths, images);
+    lib::readImage(imgPath, img);
 }
 
 void ImageProcessor::detectSphereCenters(Eigen::MatrixXf& inliers, Eigen::Vector3f& S0)
 {
-    for (int i = 0; i < images.size(); ++i)
-    {
-        const auto& img = images[i];
         // Perform processing on each image
         cv::Mat grayImg = rgb2gray(img);
 
@@ -60,21 +58,16 @@ void ImageProcessor::detectSphereCenters(Eigen::MatrixXf& inliers, Eigen::Vector
         Eigen::MatrixXf points_pix(edgeIndices.rows(), 2);
         points_pix << edgeIndices.col(1).cast<float>(), edgeIndices.col(0).cast<float>();
 
-        // Visualization of Normalized Points
-        lib::visualizePoints(img, points_pix, "Normalized Points");
+    // Visualization of the selected edges
+    lib::visualizePoints(img, points_pix, Eigen::Vector2f(0,0), "Selected edges: " + imgPath, imgPath);
 
         // Normalize coordinates
         Eigen::MatrixXf points_m = pixel2meter(points_pix);
 
-        // Detect ellipse inliers and parameters
-        Eigen::VectorXf ellipseImpl;
-        Eigen::Vector3f S0Ini, S0Opt;
-        Eigen::Vector3f S0Row;  // Temporary variable to store the result
-        float dummyAlpha;       // Dummy variable to store the second value
-
         switch (camRansac)
         {
         case 1:
+        // TODO
             break;
         case 2:
             detectSphereRand3p(points_m, inliers, S0);
@@ -83,12 +76,12 @@ void ImageProcessor::detectSphereCenters(Eigen::MatrixXf& inliers, Eigen::Vector
             break;
         }
 
-        Eigen::MatrixXf inliers2 = meter2pixel(inliers);
+    Eigen::MatrixXf inliersNormalized = meter2pixel(inliers);
+    Eigen::MatrixXf S0Normalized = meter2pixel(S0);
 
-        // Visualization of Normalized Points
-        lib::visualizePoints(img, inliers2, "Normalized Points");
+    // Visualization of inliers and sphere center
+    lib::visualizePoints(img, inliersNormalized, S0Normalized, "Inliers and sphere center: " + imgPath, imgPath);
     }
-}
 
 cv::Mat ImageProcessor::rgb2gray(const cv::Mat& img)
 {
@@ -177,6 +170,21 @@ Eigen::MatrixXf ImageProcessor::meter2pixel(const Eigen::MatrixXf& points_m)
     return points_pix;
 }
 
+Eigen::Vector2f ImageProcessor::meter2pixel(const Eigen::Vector3f& point_m)
+{
+    // Extract x, y, z coordinates from the Vector3f
+    float x_m = point_m(0);
+    float y_m = point_m(1);
+    float z_m = point_m(2);
+
+    // Convert meters to image pixels using camera intrinsic parameters
+    float x_pix = fu * x_m / z_m + u0;
+    float y_pix = fv * y_m / z_m + v0;
+
+    return Eigen::Vector2f(x_pix, y_pix);
+}
+
+
 void ImageProcessor::detectSphereRand3p(const Eigen::MatrixXf& points_m, Eigen::MatrixXf& inliers, Eigen::Vector3f& S0)
 {
     // Assuming the necessary functions for ellipse fitting, classification, and sphere fitting are available
@@ -189,7 +197,7 @@ void ImageProcessor::detectSphereRand3p(const Eigen::MatrixXf& points_m, Eigen::
 
         // Approximate sphere projection parameters with 3 points
         Eigen::MatrixXf selectedPoints = points_m.block(inlierIdxsTmp[0], 0, 3, 2);
-        std::cout << "Index" << j << "/" << iterationsRCam << std::endl;
+        std::cout << "\rIndex" << j << "/" << iterationsRCam << std::flush;
 
         Eigen::VectorXf ellipseParam = fitEllipse3p(selectedPoints);
 
@@ -204,6 +212,8 @@ void ImageProcessor::detectSphereRand3p(const Eigen::MatrixXf& points_m, Eigen::
             }
         }
     }
+
+    std::cout << std::endl;
 
     // Re-fit a sphere
     inliers.resize(inlierIdxs.size(), 2);
