@@ -1,0 +1,21 @@
+{
+  "xyzPaths": [ "input/Example2/data3D/L2_S1.xyz", "input/Example2/data3D/L2_S2.xyz", "input/Example2/data3D/L2_S3.xyz" ],
+  "imgPaths": [ "input/Example2/data2D/C2_S1.bmp", "input/Example2/data2D/C2_S2.bmp", "input/Example2/data2D/C2_S3.bmp" ],
+  "ransacTypeLid": 1,
+  "ransacThresholdLid": 0.05,
+  "rMinLid": 0.1,
+  "rMaxLid": 3,
+  "iterationsRand4p": 10000,
+  "iterationsAdjacency": 10000,
+  "adjacencyThreshold": 30,
+  "iterationsDistance": 10000,
+  "distanceThreshold": 0.15,
+  "iterationsCam": 10000,
+  "ransacTypeCam": 2,
+  "edgeDetect": 1,
+  "edgeThreshold": 0.25,
+  "fu": 1262.620252,
+  "fv": 1267.36535,
+  "u0": 934.611657,
+  "v0": 659.520995
+}

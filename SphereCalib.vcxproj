@@ -19,12 +19,14 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\ConfigReader.cpp" />
     <ClCompile Include="src\imageProcessor.cpp" />
     <ClCompile Include="src\lib.cpp" />
     <ClCompile Include="src\pointCloudProcessor.cpp" />
     <ClCompile Include="src\SphereCalib.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\ConfigReader.h" />
     <ClInclude Include="include\imageProcessor.h" />
     <ClInclude Include="include\pointCloudProcessor.h" />
     <ClInclude Include="include\lib.h" />
@@ -122,7 +124,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>T:\PCL 1.13.1\3rdParty\Boost\include\boost-1_82;T:\eigen-3.4.0;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>T:\PCL 1.13.1\3rdParty\Boost\include\boost-1_82;T:\eigen-3.4.0;T:\nlohmannJson-3.11.3\single_include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

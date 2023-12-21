@@ -1,5 +1,5 @@
 #include <iostream>
-
+#include "ConfigReader.h"
 #include "pointCloudProcessor.h"
 #include "ImageProcessor.h"
 #include <Eigen/Dense>

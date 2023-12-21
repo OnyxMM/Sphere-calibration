@@ -1,0 +1,40 @@
+{
+  "xyzPaths": [ "input/Example1/data3D/L1_S1.xyz", "input/Example1/data3D/L1_S2.xyz", "input/Example1/data3D/L1_S3.xyz", "input/Example1/data3D/L1_S4.xyz" ],
+  "imgPaths": [ "input/Example1/data2D/lights/C1_S1.png", "input/Example1/data2D/lights/C1_S2.png", "input/Example1/data2D/lights/C1_S3.png", "input/Example1/data2D/lights/C1_S4.png" ],
+  "ransacTypeLid": 1,
+  "ransacThresholdLid": 0.05,
+  "rMinLid": 0.1,
+  "rMaxLid": 3,
+  "iterationsRand4p": 10000,
+  "iterationsAdjacency": 10000,
+  "adjacencyThreshold": 30,
+  "iterationsDistance": 10000,
+  "distanceThreshold": 0.15,
+  "iterationsCam": 10000,
+  "ransacTypeCam": 2,
+  "edgeDetect": 1,
+  "edgeThreshold": 120,
+  "fu": 2800,
+  "fv": 2800,
+  "u0": 1280,
+  "v0": 960,
+  "S0CamGT": [
+    [ -3.47111307, 0.98477533, 13.35056193 ],
+    [ 1.31636715, 1.05365733, 12.71291961 ],
+    [ -0.46827866, -0.19445563, 14.55089487 ],
+    [ 3.00429637, 0.34605275, 16.86726548 ]
+  ],
+  "S0LidGT": [
+    [ -1.18619101, -1.74628193, -15.23562981 ],
+    [ 0.89984265, -3.26266199, -11.1514706 ],
+    [ 1.58127208, -1.41927764, -13.2150812 ],
+    [ 5.34731628, -2.7910313, -11.92989478 ]
+  ],
+  "rGT": 2,
+  "rotGT": [
+    [ 0.54777946, -0.10740542, 0.82969986 ],
+    [ -0.29363832, -0.95331658, 0.07045644 ],
+    [ 0.7833991, -0.28222624, -0.55374562 ]
+  ],
+  "transGT": [ -10.25597555, -2.76736354, -4.84561715 ]
+}
